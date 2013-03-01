@@ -447,26 +447,27 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 	while (r == 0 && ok_so_far >= 0 && f_pos >= 2) {
 		ospfs_direntry_t *od;
 		ospfs_inode_t *entry_oi;
-        break;
+        //break;
 		/* If at the end of the directory, set 'r' to 1 and exit
 		 * the loop.  For now we do this all the time.
 		 *
 		 * EXERCISE: Your code here */
         // End of directory when pos is greater than directory size
-        if ( (f_pos - 2) >= dir_oi->oi_size * OSPFS_DIRENTRY_SIZE)
+        if ( (f_pos - 2) >= dir_oi->oi_size)
         {
 		    r = 1;		
 		    break;	
         }
         // Get pointer to next entry
-        od = ospfs_inode_data(dir_oi, (f_pos - 2) * OSPFS_DIRENTRY_SIZE);
+        od = ospfs_inode_data(dir_oi, (f_pos - 2));
 
         // Determine file type
         entry_oi = ospfs_inode(od->od_ino);
+
         // Empty inode
         if (entry_oi == NULL)
         {
-            f_pos += OSPFS_DIRENTRY_SIZE;
+            f_pos++;
             continue;
         }
         // Read directory
@@ -486,16 +487,13 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
             ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, DT_LNK);
         }
 
-        if (ok_so_far >= 0)
-        {
-            f_pos += OSPFS_DIRENTRY_SIZE;
-        }
-        else
+        if (ok_so_far < 0)
         {
             // Check for errors
             r = 1;
             break;
         }
+        f_pos++;
 		/* Get a pointer to the next entry (od) in the directory.
 		 * The file system interprets the contents of a
 		 * directory-file as a sequence of ospfs_direntry structures.
